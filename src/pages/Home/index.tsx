@@ -1,6 +1,9 @@
 import { Play } from "phosphor-react";
 import { useForm } from 'react-hook-form'
 
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as zod from 'zod'
+
 import { 
   CountDownContainer, 
   FormContainer, 
@@ -10,6 +13,7 @@ import {
   StartCountDownButton, 
   TaskInput 
 } from "./styles";
+import { TypeOf } from "zod";
 
 
 // o register é uma função que retorna alguns metodos
@@ -24,11 +28,29 @@ import {
   }
 */
 
+const newCycleFormValidationSchema = zod.object({
+  task: zod.string().min(1, 'Informe a tarefa'),
+  minutesAmount: zod
+  .number()
+  .min(5, 'o intervalo do ciclo precisa ser de no mínimo 5 minutos')
+  .max(60, 'o intervalo do ciclo precisa ser de no maximo 60 minutos')
+})
+
+type NewCycleFormData = zod.infer<typeof newCycleFormValidationSchema> // eu posso optar por utilizar a iteligencia do zod para pegar os typos do campo 
+
 export function Home() {
-  const { register, handleSubmit, watch } = useForm()  // ele é um obj que tem varias funçoes/variaveis, eu posso desestruturar e extrair algumas variaveis e algumas funçoes daqui de dentro
+  const { register, handleSubmit, watch, reset } = useForm<NewCycleFormData>({ // passando um objeto de configuranções
+    resolver: zodResolver(newCycleFormValidationSchema),
+    defaultValues: {
+      task: '',
+      minutesAmount: 0
+    }
+
+  })  // ele é um obj que tem varias funçoes/variaveis, eu posso desestruturar e extrair algumas variaveis e algumas funçoes daqui de dentro
 
   function handleCreateNewCycle( data: any ) { // aqui dentro eu posso receber o argumento 'data' que contem os dados dos nossos inputs do nosso formulário
     console.log(data)
+    reset()
   }
 
   const task = watch('task') // eu posso importar de dentro do use form uma função chamada watch para observar alguma coisa, aqui eu estou observando o meu campo 'task' e agora eu consigo saber o valor do meu campo em tempo real
@@ -65,7 +87,7 @@ export function Home() {
             step={5}
             min={5}
             max={60}
-            { ...register('minutesAmout', { valueAsNumber: true })} // eu posso passar como segundo argumento um objeto de configurações
+            { ...register('minutesAmount', { valueAsNumber: true })} // eu posso passar como segundo argumento um objeto de configurações
           />
 
           <span>minutos.</span>
