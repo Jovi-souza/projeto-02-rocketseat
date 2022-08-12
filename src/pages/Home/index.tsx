@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as zod from 'zod'
+import { differenceInSeconds } from 'date-fns'
+import { useEffect, useState } from "react";
 
 import { 
   CountDownContainer, 
@@ -13,8 +15,6 @@ import {
   StartCountDownButton, 
   TaskInput 
 } from "./styles";
-import { TypeOf } from "zod";
-
 
 // o register é uma função que retorna alguns metodos
 
@@ -38,7 +38,19 @@ const newCycleFormValidationSchema = zod.object({
 
 type NewCycleFormData = zod.infer<typeof newCycleFormValidationSchema> // eu posso optar por utilizar a iteligencia do zod para pegar os typos do campo 
 
+interface Cycle {
+  id: string
+  task: string
+  minutesAmount: number
+  startDate: Date
+}
+
 export function Home() {
+
+  const[cycles, setCycles] = useState<Cycle[]>([])
+  const[activeCycleId, setActiveCycleId] = useState<string | null>(null)
+  const [amountSecondsPassed, setAmountSecondsPassed] = useState(0)
+
   const { register, handleSubmit, watch, reset } = useForm<NewCycleFormData>({ // passando um objeto de configuranções
     resolver: zodResolver(newCycleFormValidationSchema),
     defaultValues: {
@@ -48,13 +60,43 @@ export function Home() {
 
   })  // ele é um obj que tem varias funçoes/variaveis, eu posso desestruturar e extrair algumas variaveis e algumas funçoes daqui de dentro
 
-  function handleCreateNewCycle( data: any ) { // aqui dentro eu posso receber o argumento 'data' que contem os dados dos nossos inputs do nosso formulário
-    console.log(data)
+  const activeCycle = cycles.find( (cycle) => cycle.id === activeCycleId) 
+
+  useEffect( () => {
+    if(activeCycle) {
+      setInterval(() => {
+        setAmountSecondsPassed( differenceInSeconds(new Date(), activeCycle.startDate),
+        )
+      }, 1000)
+    }
+  }, [activeCycle])
+
+  function handleCreateNewCycle( data: NewCycleFormData ) { // aqui dentro eu posso receber o argumento 'data' que contem os dados dos nossos inputs do nosso formulário
+    const id = String(new Date().getTime()) // aqui tem uma forma muito interessante de se colocar m id
+
+    const newCycle: Cycle = {
+      id,
+      task: data.task,
+      minutesAmount: data.minutesAmount,
+      startDate: new Date()
+    }
+
+    setCycles([...cycles, newCycle])
+    setActiveCycleId(id)
+
     reset()
   }
 
-  const task = watch('task') // eu posso importar de dentro do use form uma função chamada watch para observar alguma coisa, aqui eu estou observando o meu campo 'task' e agora eu consigo saber o valor do meu campo em tempo real
+  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
+  const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0
 
+  const minutesAmount = Math.floor(currentSeconds / 60)
+  const secondsAmount = currentSeconds % 60
+
+  const minutes = String(minutesAmount).padStart(2, "0")
+  const seconds = String(secondsAmount).padStart(2, "0")
+
+  const task = watch('task') // eu posso importar de dentro do use form uma função chamada watch para observar alguma coisa, aqui eu estou observando o meu campo 'task' e agora eu consigo saber o valor do meu campo em tempo real
   const isSubmitDisabled = !task // uma boa prática é colocar variaveis auxiliares, elas não alteram o meu código e não afetam a performance mas aumenta a legibilidade do código
 
   return(
@@ -94,11 +136,11 @@ export function Home() {
         </FormContainer>
 
         <CountDownContainer>
-          <span>0</span>
-          <span>0</span>
+          <span>{minutes[0]}</span>
+          <span>{minutes[1]}</span>
           <Separator>:</Separator>
-          <span>0</span>
-          <span>0</span>
+          <span>{seconds[0]}</span>
+          <span>{seconds[1]}</span>
         </CountDownContainer>
         
         <StartCountDownButton 
