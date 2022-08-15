@@ -1,28 +1,11 @@
 import { FormContainer, TaskInput, MinutesAmountInput} from './styles'
-import * as zod from 'zod'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { useContext } from 'react'
+import { CycleContext } from '../..'
+import { useFormContext } from 'react-hook-form'
 
 export function NewCycleForm() {
-
-  const newCycleFormValidationSchema = zod.object({
-    task: zod.string().min(1, 'Informe a tarefa'),
-    minutesAmount: zod
-    .number()
-    .min(1, 'o intervalo do ciclo precisa ser de no mínimo 5 minutos')
-    .max(60, 'o intervalo do ciclo precisa ser de no maximo 60 minutos')
-  })
-  
-  type NewCycleFormData = zod.infer<typeof newCycleFormValidationSchema> // eu posso optar por utilizar a iteligencia do zod para pegar os typos do campo 
-
-  const { register, handleSubmit, watch, reset } = useForm<NewCycleFormData>({ // passando um objeto de configuranções
-    resolver: zodResolver(newCycleFormValidationSchema),
-    defaultValues: {
-      task: '',
-      minutesAmount: 0
-    }
-
-  })  // ele é um obj que tem varias funçoes/variaveis, eu posso desestruturar e extrair algumas variaveis e algumas funçoes daqui de dentro
+  const { activeCycle } = useContext(CycleContext)
+  const { register } = useFormContext()
 
   return(
     <FormContainer>
@@ -48,7 +31,7 @@ export function NewCycleForm() {
         id="miutesAmount" 
         placeholder="00"
         step={5}
-        min={1}
+        min={5}
         max={60}
         disabled={!!activeCycle}
         { ...register('minutesAmount', { valueAsNumber: true })} // eu posso passar como segundo argumento um objeto de configurações
