@@ -36,7 +36,6 @@ export const BaseCountDownButton = styled.button`
     opacity: 0.7;
     cursor: not-allowed;
   }
-
 `
 
 export const StartCountDownButton = styled(BaseCountDownButton)`
